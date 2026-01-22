@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Que aws cli no use less
+export AWS_PAGER=""
+# Fin Que aws cli no use less
+
 # Elegir un Dockerfile
 DOCKERFILES=(dockerfiles/*)
 echo "Elige un Dockerfile:"
@@ -60,6 +64,65 @@ else
 fi
 # Fin Test de credenciales
 
+# Introduce el nombre del aplicativo a desplegar
+read -p "Nombre del aplicativo: " APP_NAME
+APP_NAME=${APP_NAME:-aws-ec2-docker-deployer}
+APP_NAME=${APP_NAME}-aedd
+# Fin Introduce el nombre del aplicativo a desplegar
+
+# Asegurarse de que existe la carpeta keypairs
+mkdir -p keypairs
+# Fin Asegurarse de que existe la carpeta keypairs
+
+# Crear key pair
+aws ec2 create-key-pair \
+  --key-name "$APP_NAME" \
+  --query 'KeyMaterial' \
+  --output text > "keypairs/$APP_NAME.pem"
+# Fin crear key pair
+
+# Crear security group
+aws ec2 create-security-group \
+  --group-name "$APP_NAME-sg" \
+  --description "Security group for $APP_NAME"
+# Fin crear security group
+
+# Obtener el security group ID
+SECURITY_GROUP_ID=$(
+  aws ec2 describe-security-groups \
+  --filters Name=group-name,Values="$APP_NAME-sg" \
+  --query 'SecurityGroups[0].GroupId' \
+  --output text)
+# Fin Obtener el security group ID
+
+# Agregar reglas al security group
+aws ec2 authorize-security-group-ingress \
+  --group-id "$SECURITY_GROUP_ID" \
+  --protocol tcp \
+  --port 22 \
+  --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress \
+  --group-id "$SECURITY_GROUP_ID" \
+  --protocol tcp \
+  --port 80 \
+  --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress \
+  --group-id "$SECURITY_GROUP_ID" \
+  --protocol tcp \
+  --port 443 \
+  --cidr 0.0.0.0/0
+# Fin agregar reglas al security group
+
+# Ubuntus: ami-01f79b1e4a5c64257 (64-bit (x86)) / ami-0df5c15a5f998e2ab (64-bit (Arm))
+# t3a.medium (64-bit (x86)) / t4g.medium (64-bit (Arm))
+# aws ec2 run-instances \
+#   --image-id ami-0c02fb55956c7d316 \
+#   --instance-type t3.micro \
+#   --key-name raul-key \
+#   --security-group-ids sg-0abc1234 \
+#   --subnet-id subnet-0abc1234 \
+#   --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=mi-ec2}]'
+
 # Asegurarse de que existe la carpeta logs
 mkdir -p logs
 # Fin Asegurarse de que existe la carpeta logs
@@ -73,5 +136,6 @@ LOG_FILE="logs/$(date '+%Y-%m-%d_%H-%M-%S').log"
   echo "AWS_REGION=$AWS_REGION"
   echo "AWS_STS_GET_CALLER_IDENTITY=$AWS_STS_GET_CALLER_IDENTITY"
   echo "AWS_STS_GET_CALLER_IDENTITY_STATUS=$AWS_STS_GET_CALLER_IDENTITY_STATUS"
+  echo "APP_NAME=$APP_NAME"
 } > "$LOG_FILE"
 # Fin Guardar registro de variables usadas
