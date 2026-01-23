@@ -75,27 +75,36 @@ mkdir -p keypairs
 # Fin Asegurarse de que existe la carpeta keypairs
 
 # Crear key pair
+CREATE_KEY_PAIR=true
+if $CREATE_KEY_PAIR; then
 aws ec2 create-key-pair \
   --key-name "$APP_NAME" \
   --query 'KeyMaterial' \
   --output text > "keypairs/$APP_NAME.pem"
+fi
 # Fin crear key pair
 
 # Crear security group
+CREATE_SECURITY_GROUP=true
+if $CREATE_SECURITY_GROUP; then
 aws ec2 create-security-group \
   --group-name "$APP_NAME-sg" \
   --description "Security group for $APP_NAME"
+fi
 # Fin crear security group
 
 # Obtener el security group ID
+if $CREATE_SECURITY_GROUP; then
 SECURITY_GROUP_ID=$(
   aws ec2 describe-security-groups \
   --filters Name=group-name,Values="$APP_NAME-sg" \
   --query 'SecurityGroups[0].GroupId' \
   --output text)
+fi
 # Fin Obtener el security group ID
 
 # Agregar reglas al security group
+if $CREATE_SECURITY_GROUP; then
 aws ec2 authorize-security-group-ingress \
   --group-id "$SECURITY_GROUP_ID" \
   --protocol tcp \
@@ -111,15 +120,16 @@ aws ec2 authorize-security-group-ingress \
   --protocol tcp \
   --port 443 \
   --cidr 0.0.0.0/0
+fi
 # Fin agregar reglas al security group
 
 # Ubuntus: ami-01f79b1e4a5c64257 (64-bit (x86)) / ami-0df5c15a5f998e2ab (64-bit (Arm))
 # t3a.medium (64-bit (x86)) / t4g.medium (64-bit (Arm))
 # aws ec2 run-instances \
-#   --image-id ami-0c02fb55956c7d316 \
-#   --instance-type t3.micro \
-#   --key-name raul-key \
-#   --security-group-ids sg-0abc1234 \
+#   --image-id ami-0df5c15a5f998e2ab \
+#   --instance-type t4g.medium \
+#   --key-name "$APP_NAME" \
+#   --security-group-ids "$SECURITY_GROUP_ID" \
 #   --subnet-id subnet-0abc1234 \
 #   --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=mi-ec2}]'
 
