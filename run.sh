@@ -123,6 +123,10 @@ aws ec2 authorize-security-group-ingress \
 fi
 # Fin agregar reglas al security group
 
+# Seleccionar VPC y Subnet
+source scripts/select-vpc-subnet.sh
+# Fin Seleccionar VPC y Subnet
+
 # Ubuntus: ami-01f79b1e4a5c64257 (64-bit (x86)) / ami-0df5c15a5f998e2ab (64-bit (Arm))
 # t3a.medium (64-bit (x86)) / t4g.medium (64-bit (Arm))
 # aws ec2 run-instances \
