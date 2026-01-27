@@ -125,6 +125,10 @@ fi
 source scripts/select-vpc-subnet.sh
 # Fin Seleccionar VPC y Subnet
 
+# Obtener el AMI ID
+source scripts/get-ami-id-ubuntu.sh
+# Fin Obtener el AMI ID
+
 # Comprobar si existe la EC2
 source scripts/check-ec2-name.sh
 # Fin comprobar si existe la EC2
@@ -137,7 +141,7 @@ else
   # t3a.medium (64-bit (x86)) / t4g.medium (64-bit (Arm))
   # Arrancar nueva instancia EC2
   EC2_RUN_INSTANCES_OUTPUT_JSON=$(aws ec2 run-instances \
-    --image-id "ami-0df5c15a5f998e2ab" \
+    --image-id "${AMI_ID}" \
     --instance-type "t4g.medium" \
     --key-name "$APP_NAME" \
     --security-group-ids "$SECURITY_GROUP_ID" \
@@ -149,7 +153,17 @@ else
   INSTANCE_ID=$(
     echo "$EC2_RUN_INSTANCES_OUTPUT_JSON" \
     | jq -r '.Instances[0].InstanceId')
-  # Fin Obtener el Instance ID  
+  echo "✅ INSTANCE_ID: $INSTANCE_ID"
+  # Fin Obtener el Instance ID
+
+  # Obtener la dirección IP pública
+  PUBLIC_IP=$(
+    aws ec2 describe-instances \
+    --instance-ids "$INSTANCE_ID" \
+    --query 'Reservations[0].Instances[0].PublicIpAddress' \
+    --output text)
+  echo "✅ PUBLIC_IP: $PUBLIC_IP"
+  # Fin Obtener la dirección IP pública
 fi
 # Fin Si la EC2 existe entonces creala
 
