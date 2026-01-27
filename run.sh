@@ -68,10 +68,17 @@ mkdir -p keypairs
 # Crear key pair
 CREATE_KEY_PAIR=true
 if $CREATE_KEY_PAIR; then
-aws ec2 create-key-pair \
-  --key-name "$APP_NAME" \
-  --query 'KeyMaterial' \
-  --output text > "keypairs/$APP_NAME.pem"
+  if aws ec2 describe-key-pairs \
+      --query "KeyPairs[?KeyName=='$APP_NAME']" \
+      --output text | grep -q "$APP_NAME"; then
+    echo "✅ El key pair existe"
+  else
+    echo "❌ El key pair NO existe"
+    aws ec2 create-key-pair \
+      --key-name "$APP_NAME" \
+      --query 'KeyMaterial' \
+      --output text > "keypairs/$APP_NAME.$AWS_REGION.pem"
+  fi
 fi
 # Fin crear key pair
 
@@ -118,15 +125,33 @@ fi
 source scripts/select-vpc-subnet.sh
 # Fin Seleccionar VPC y Subnet
 
-# Ubuntus: ami-01f79b1e4a5c64257 (64-bit (x86)) / ami-0df5c15a5f998e2ab (64-bit (Arm))
-# t3a.medium (64-bit (x86)) / t4g.medium (64-bit (Arm))
-# aws ec2 run-instances \
-#   --image-id ami-0df5c15a5f998e2ab \
-#   --instance-type t4g.medium \
-#   --key-name "$APP_NAME" \
-#   --security-group-ids "$SECURITY_GROUP_ID" \
-#   --subnet-id subnet-0abc1234 \
-#   --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=mi-ec2}]'
+# Comprobar si existe la EC2
+source scripts/check-ec2-name.sh
+# Fin comprobar si existe la EC2
+
+# Si la EC2 existe entonces creala
+if $EC2_EXISTS; then
+  echo "❌ La EC2 '$APP_NAME' ya existe."
+else
+  # Ubuntus: ami-01f79b1e4a5c64257 (64-bit (x86)) / ami-0df5c15a5f998e2ab (64-bit (Arm))
+  # t3a.medium (64-bit (x86)) / t4g.medium (64-bit (Arm))
+  # Arrancar nueva instancia EC2
+  EC2_RUN_INSTANCES_OUTPUT_JSON=$(aws ec2 run-instances \
+    --image-id "ami-0df5c15a5f998e2ab" \
+    --instance-type "t4g.medium" \
+    --key-name "$APP_NAME" \
+    --security-group-ids "$SECURITY_GROUP_ID" \
+    --subnet-id "$SUBNET_ID" \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$APP_NAME}]" | jq)
+  # Fin Arrancar nueva instancia EC2
+
+  # Obtener el Instance ID
+  INSTANCE_ID=$(
+    echo "$EC2_RUN_INSTANCES_OUTPUT_JSON" \
+    | jq -r '.Instances[0].InstanceId')
+  # Fin Obtener el Instance ID  
+fi
+# Fin Si la EC2 existe entonces creala
 
 # Asegurarse de que existe la carpeta logs
 mkdir -p logs
@@ -142,5 +167,8 @@ LOG_FILE="logs/$(date '+%Y-%m-%d_%H-%M-%S').log"
   echo "AWS_STS_GET_CALLER_IDENTITY=$AWS_STS_GET_CALLER_IDENTITY"
   echo "AWS_STS_GET_CALLER_IDENTITY_STATUS=$AWS_STS_GET_CALLER_IDENTITY_STATUS"
   echo "APP_NAME=$APP_NAME"
+  echo "SECURITY_GROUP_ID=$SECURITY_GROUP_ID"
+  echo "EC2_RUN_INSTANCES_OUTPUT_JSON=$EC2_RUN_INSTANCES_OUTPUT_JSON"
+  echo "INSTANCE_ID=$INSTANCE_ID"
 } > "$LOG_FILE"
 # Fin Guardar registro de variables usadas
