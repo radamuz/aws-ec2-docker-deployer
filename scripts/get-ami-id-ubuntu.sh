@@ -3,21 +3,7 @@ set -euo pipefail
 
 echo "🧠 Selecciona la arquitectura:"
 
-select OPTION in "amd64 (x86_64)" "arm64 (Graviton)"; do
-  case "$REPLY" in
-    1)
-      ARCH="amd64"
-      break
-      ;;
-    2)
-      ARCH="arm64"
-      break
-      ;;
-    *)
-      echo "❌ Opción inválida, prueba otra vez."
-      ;;
-  esac
-done
+ARCH="arm64"
 
 SSM_PARAM="/aws/service/canonical/ubuntu/server/24.04/stable/current/${ARCH}/hvm/ebs-gp3/ami-id"
 
