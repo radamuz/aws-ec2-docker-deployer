@@ -181,7 +181,25 @@ echo -e "${CYAN}Inicio Bloque Si la EC2 no existe entonces creala${NC}"
 CREATE_EC2=true
 if $CREATE_EC2; then
   if $EC2_EXISTS; then
-    echo "❌ La EC2 '$APP_NAME' ya existe."
+    # Si la EC2 existe obtener el INSTANCE_ID
+    echo -e "${CYAN}Inicio Bloque Si la EC2 existe obtener el INSTANCE_ID${NC}"
+    echo "✅ La EC2 '$APP_NAME' ya existe."
+    INSTANCE_ID=$(
+      aws ec2 describe-instances \
+      --filters Name=tag:Name,Values="$APP_NAME" \
+      --query 'Reservations[0].Instances[0].InstanceId' \
+      --output text)
+    echo "✅ INSTANCE_ID: $INSTANCE_ID"
+
+    # Obtener la dirección IP pública
+    PUBLIC_IP=$(
+      aws ec2 describe-instances \
+      --instance-ids "$INSTANCE_ID" \
+      --query 'Reservations[0].Instances[0].PublicIpAddress' \
+      --output text)
+    echo "✅ PUBLIC_IP: $PUBLIC_IP"
+    echo -e "${GREEN}Fin Bloque Si la EC2 existe obtener el INSTANCE_ID${NC}"
+    # Fin Si la EC2 existe obtener el INSTANCE_ID
   else
     # Ubuntus: ami-01f79b1e4a5c64257 (64-bit (x86)) / ami-0df5c15a5f998e2ab (64-bit (Arm))
     # t3a.medium (64-bit (x86)) / t4g.medium (64-bit (Arm))
@@ -215,26 +233,6 @@ fi
 echo -e "${GREEN}Fin Bloque Si la EC2 no existe entonces creala${NC}"
 # Fin Si la EC2 no existe entonces creala
 
-# Si la EC2 existe obtener el INSTANCE_ID
-echo -e "${CYAN}Inicio Bloque Si la EC2 existe obtener el INSTANCE_ID${NC}"
-if [[ "$EC2_EXISTS" == "false" ]]; then
-  INSTANCE_ID=$(
-    aws ec2 describe-instances \
-    --filters Name=tag:Name,Values="$APP_NAME" \
-    --query 'Reservations[0].Instances[0].InstanceId' \
-    --output text)
-  echo "✅ INSTANCE_ID: $INSTANCE_ID"
-
-  # Obtener la dirección IP pública
-  PUBLIC_IP=$(
-    aws ec2 describe-instances \
-    --instance-ids "$INSTANCE_ID" \
-    --query 'Reservations[0].Instances[0].PublicIpAddress' \
-    --output text)
-  echo "✅ PUBLIC_IP: $PUBLIC_IP"
-fi
-echo -e "${GREEN}Fin Bloque Si la EC2 existe obtener el INSTANCE_ID${NC}"
-# Fin Si la EC2 existe obtener el INSTANCE_ID
 
 
 # Asegurarse de que existe la carpeta logs
