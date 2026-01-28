@@ -219,6 +219,9 @@ if $CREATE_EC2; then
       --output text)
     echo "✅ INSTANCE_ID: $INSTANCE_ID"
 
+    EC2_DESCRIBE_INSTANCES_OUTPUT_JSON=$(aws ec2 describe-instances \
+      --instance-ids "$INSTANCE_ID")
+
     # Obtener la dirección IP pública
     PUBLIC_IP=$(
       aws ec2 describe-instances \
@@ -289,6 +292,7 @@ LOG_FILE="logs/$(date '+%Y-%m-%d_%H-%M-%S').log"
   echo "APP_NAME=${APP_NAME-UNDEFINED}"
   echo "SECURITY_GROUP_ID=${SECURITY_GROUP_ID-UNDEFINED}"
   echo "PEM_KEY_PATH=${PEM_KEY_PATH-UNDEFINED}"
+  echo "EC2_DESCRIBE_INSTANCES_OUTPUT_JSON=${EC2_DESCRIBE_INSTANCES_OUTPUT_JSON-UNDEFINED}"
   echo "EC2_RUN_INSTANCES_OUTPUT_JSON=${EC2_RUN_INSTANCES_OUTPUT_JSON-UNDEFINED}"
   echo "INSTANCE_ID=${INSTANCE_ID-UNDEFINED}"
   echo "PUBLIC_IP=${PUBLIC_IP-UNDEFINED}"
