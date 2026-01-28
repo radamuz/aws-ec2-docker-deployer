@@ -176,9 +176,9 @@ source scripts/check-ec2-name.sh
 echo -e "${GREEN}Fin Bloque Comprobar si existe la EC2${NC}"
 # Fin comprobar si existe la EC2
 
-# Si la EC2 existe entonces creala
-echo -e "${CYAN}Inicio Bloque Si la EC2 existe entonces creala${NC}"
-CREATE_EC2=false
+# Si la EC2 no existe entonces creala
+echo -e "${CYAN}Inicio Bloque Si la EC2 no existe entonces creala${NC}"
+CREATE_EC2=true
 if $CREATE_EC2; then
   if $EC2_EXISTS; then
     echo "❌ La EC2 '$APP_NAME' ya existe."
@@ -189,7 +189,7 @@ if $CREATE_EC2; then
     EC2_RUN_INSTANCES_OUTPUT_JSON=$(aws ec2 run-instances \
       --image-id "${AMI_ID}" \
       --instance-type "t4g.medium" \
-      --key-name "$APP_NAME" \
+      --key-name "$APP_NAME.$AWS_REGION.$AWS_PROFILE" \
       --security-group-ids "$SECURITY_GROUP_ID" \
       --subnet-id "$SUBNET_ID" \
       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$APP_NAME}]" | jq)
@@ -212,8 +212,30 @@ if $CREATE_EC2; then
     # Fin Obtener la dirección IP pública
   fi
 fi
-echo -e "${GREEN}Fin Bloque Si la EC2 existe entonces creala${NC}"
-# Fin Si la EC2 existe entonces creala
+echo -e "${GREEN}Fin Bloque Si la EC2 no existe entonces creala${NC}"
+# Fin Si la EC2 no existe entonces creala
+
+# Si la EC2 existe obtener el INSTANCE_ID
+echo -e "${CYAN}Inicio Bloque Si la EC2 existe obtener el INSTANCE_ID${NC}"
+if [[ "$EC2_EXISTS" == "false" ]]; then
+  INSTANCE_ID=$(
+    aws ec2 describe-instances \
+    --filters Name=tag:Name,Values="$APP_NAME" \
+    --query 'Reservations[0].Instances[0].InstanceId' \
+    --output text)
+  echo "✅ INSTANCE_ID: $INSTANCE_ID"
+
+  # Obtener la dirección IP pública
+  PUBLIC_IP=$(
+    aws ec2 describe-instances \
+    --instance-ids "$INSTANCE_ID" \
+    --query 'Reservations[0].Instances[0].PublicIpAddress' \
+    --output text)
+  echo "✅ PUBLIC_IP: $PUBLIC_IP"
+fi
+echo -e "${GREEN}Fin Bloque Si la EC2 existe obtener el INSTANCE_ID${NC}"
+# Fin Si la EC2 existe obtener el INSTANCE_ID
+
 
 # Asegurarse de que existe la carpeta logs
 echo -e "${CYAN}Inicio Bloque Asegurarse de que existe la carpeta logs${NC}"
