@@ -178,36 +178,39 @@ echo -e "${GREEN}Fin Bloque Comprobar si existe la EC2${NC}"
 
 # Si la EC2 existe entonces creala
 echo -e "${CYAN}Inicio Bloque Si la EC2 existe entonces creala${NC}"
-if $EC2_EXISTS; then
-  echo "❌ La EC2 '$APP_NAME' ya existe."
-else
-  # Ubuntus: ami-01f79b1e4a5c64257 (64-bit (x86)) / ami-0df5c15a5f998e2ab (64-bit (Arm))
-  # t3a.medium (64-bit (x86)) / t4g.medium (64-bit (Arm))
-  # Arrancar nueva instancia EC2
-  EC2_RUN_INSTANCES_OUTPUT_JSON=$(aws ec2 run-instances \
-    --image-id "${AMI_ID}" \
-    --instance-type "t4g.medium" \
-    --key-name "$APP_NAME" \
-    --security-group-ids "$SECURITY_GROUP_ID" \
-    --subnet-id "$SUBNET_ID" \
-    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$APP_NAME}]" | jq)
-  # Fin Arrancar nueva instancia EC2
+CREATE_EC2=false
+if $CREATE_EC2; then
+  if $EC2_EXISTS; then
+    echo "❌ La EC2 '$APP_NAME' ya existe."
+  else
+    # Ubuntus: ami-01f79b1e4a5c64257 (64-bit (x86)) / ami-0df5c15a5f998e2ab (64-bit (Arm))
+    # t3a.medium (64-bit (x86)) / t4g.medium (64-bit (Arm))
+    # Arrancar nueva instancia EC2
+    EC2_RUN_INSTANCES_OUTPUT_JSON=$(aws ec2 run-instances \
+      --image-id "${AMI_ID}" \
+      --instance-type "t4g.medium" \
+      --key-name "$APP_NAME" \
+      --security-group-ids "$SECURITY_GROUP_ID" \
+      --subnet-id "$SUBNET_ID" \
+      --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$APP_NAME}]" | jq)
+    # Fin Arrancar nueva instancia EC2
 
-  # Obtener el Instance ID
-  INSTANCE_ID=$(
-    echo "$EC2_RUN_INSTANCES_OUTPUT_JSON" \
-    | jq -r '.Instances[0].InstanceId')
-  echo "✅ INSTANCE_ID: $INSTANCE_ID"
-  # Fin Obtener el Instance ID
+    # Obtener el Instance ID
+    INSTANCE_ID=$(
+      echo "$EC2_RUN_INSTANCES_OUTPUT_JSON" \
+      | jq -r '.Instances[0].InstanceId')
+    echo "✅ INSTANCE_ID: $INSTANCE_ID"
+    # Fin Obtener el Instance ID
 
-  # Obtener la dirección IP pública
-  PUBLIC_IP=$(
-    aws ec2 describe-instances \
-    --instance-ids "$INSTANCE_ID" \
-    --query 'Reservations[0].Instances[0].PublicIpAddress' \
-    --output text)
-  echo "✅ PUBLIC_IP: $PUBLIC_IP"
-  # Fin Obtener la dirección IP pública
+    # Obtener la dirección IP pública
+    PUBLIC_IP=$(
+      aws ec2 describe-instances \
+      --instance-ids "$INSTANCE_ID" \
+      --query 'Reservations[0].Instances[0].PublicIpAddress' \
+      --output text)
+    echo "✅ PUBLIC_IP: $PUBLIC_IP"
+    # Fin Obtener la dirección IP pública
+  fi
 fi
 echo -e "${GREEN}Fin Bloque Si la EC2 existe entonces creala${NC}"
 # Fin Si la EC2 existe entonces creala
@@ -232,6 +235,7 @@ LOG_FILE="logs/$(date '+%Y-%m-%d_%H-%M-%S').log"
   echo "SECURITY_GROUP_ID=$SECURITY_GROUP_ID"
   echo "EC2_RUN_INSTANCES_OUTPUT_JSON=$EC2_RUN_INSTANCES_OUTPUT_JSON"
   echo "INSTANCE_ID=$INSTANCE_ID"
+  echo "PUBLIC_IP=${PUBLIC_IP-UNDEFINED}"
 } > "$LOG_FILE"
 echo -e "${GREEN}Fin Bloque Guardar registro de variables usadas${NC}"
 # Fin Guardar registro de variables usadas
