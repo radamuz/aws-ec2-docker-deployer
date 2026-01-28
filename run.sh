@@ -250,7 +250,14 @@ fi
 echo -e "${GREEN}Fin Bloque Si la EC2 no existe entonces creala${NC}"
 # Fin Si la EC2 no existe entonces creala
 
-
+# Informar al usuario de que puede acceder a la máquina a través del siguiente comando
+echo -e "${CYAN}Inicio Bloque Informar al usuario de que puede acceder a la máquina a través del siguiente comando${NC}"
+echo -e "Puedes acceder a la máquina a través del siguiente comando:"
+PEM_KEY_REALPATH=$(realpath "$PEM_KEY_PATH")
+echo "chmod 600 $PEM_KEY_REALPATH"
+echo "ssh -i $PEM_KEY_REALPATH ubuntu@$PUBLIC_IP"
+echo -e "${GREEN}Fin Bloque Informar al usuario de que puede acceder a la máquina a través del siguiente comando${NC}"
+# Fin Informar al usuario de que puede acceder a la máquina a través del siguiente comando
 
 # Asegurarse de que existe la carpeta logs
 echo -e "${CYAN}Inicio Bloque Asegurarse de que existe la carpeta logs${NC}"
