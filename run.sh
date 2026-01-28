@@ -97,17 +97,19 @@ echo -e "${GREEN}Fin Bloque Asegurarse de que existe la carpeta keypairs${NC}"
 # Crear key pair
 echo -e "${CYAN}Inicio Bloque Crear key pair${NC}"
 CREATE_KEY_PAIR=true
+PEM_KEY_NAME="$APP_NAME.$AWS_REGION.$AWS_PROFILE"
+PEM_KEY_PATH="keypairs/$PEM_KEY_NAME.pem"
 if $CREATE_KEY_PAIR; then
   if aws ec2 describe-key-pairs \
-      --query "KeyPairs[?KeyName=='$APP_NAME.$AWS_REGION.$AWS_PROFILE']" \
-      --output text | grep -q "$APP_NAME.$AWS_REGION.$AWS_PROFILE"; then
+      --query "KeyPairs[?KeyName=='$PEM_KEY_NAME']" \
+      --output text | grep -q "$PEM_KEY_NAME"; then
     echo "✅ El key pair existe"
   else
     echo "❌ El key pair NO existe"
     aws ec2 create-key-pair \
-      --key-name "$APP_NAME.$AWS_REGION.$AWS_PROFILE" \
+      --key-name "$PEM_KEY_NAME" \
       --query 'KeyMaterial' \
-      --output text > "keypairs/$APP_NAME.$AWS_REGION.$AWS_PROFILE.pem"
+      --output text > "$PEM_KEY_PATH"
   fi
 fi
 echo -e "${GREEN}Fin Bloque Crear key pair${NC}"
@@ -176,6 +178,21 @@ source scripts/check-ec2-name.sh
 echo -e "${GREEN}Fin Bloque Comprobar si existe la EC2${NC}"
 # Fin comprobar si existe la EC2
 
+# Elegir el instance type de AWS
+echo -e "${CYAN}Inicio Bloque Elegir el instance type de AWS${NC}"
+echo "Elige el instance type de AWS:"
+select INSTANCE_TYPE in $(cat config/instance-types.txt); do
+  if [[ -n "$INSTANCE_TYPE" ]]; then
+    echo "Has elegido el instance type de AWS: $INSTANCE_TYPE"
+    export INSTANCE_TYPE
+    break
+  else
+    echo "Opción inválida, prueba otra vez."
+  fi
+done
+echo -e "${GREEN}Fin Bloque Elegir el instance type de AWS${NC}"
+# Fin Elegir el instance type de AWS
+
 # Si la EC2 no existe entonces creala
 echo -e "${CYAN}Inicio Bloque Si la EC2 no existe entonces creala${NC}"
 CREATE_EC2=true
@@ -206,8 +223,8 @@ if $CREATE_EC2; then
     # Arrancar nueva instancia EC2
     EC2_RUN_INSTANCES_OUTPUT_JSON=$(aws ec2 run-instances \
       --image-id "${AMI_ID}" \
-      --instance-type "t4g.medium" \
-      --key-name "$APP_NAME.$AWS_REGION.$AWS_PROFILE" \
+      --instance-type "$INSTANCE_TYPE" \
+      --key-name "$PEM_KEY_NAME" \
       --security-group-ids "$SECURITY_GROUP_ID" \
       --subnet-id "$SUBNET_ID" \
       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$APP_NAME}]" | jq)
@@ -256,6 +273,7 @@ LOG_FILE="logs/$(date '+%Y-%m-%d_%H-%M-%S').log"
   echo "EC2_RUN_INSTANCES_OUTPUT_JSON=${EC2_RUN_INSTANCES_OUTPUT_JSON-UNDEFINED}"
   echo "INSTANCE_ID=${INSTANCE_ID-UNDEFINED}"
   echo "PUBLIC_IP=${PUBLIC_IP-UNDEFINED}"
+  echo "PEM_KEY_PATH=${PEM_KEY_PATH-UNDEFINED}"
 } > "$LOG_FILE"
 echo -e "${GREEN}Fin Bloque Guardar registro de variables usadas${NC}"
 # Fin Guardar registro de variables usadas
