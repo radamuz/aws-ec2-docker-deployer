@@ -115,6 +115,17 @@ fi
 echo -e "${GREEN}Fin Bloque Crear key pair${NC}"
 # Fin crear key pair
 
+# Hacer cat $PEM_KEY_PATH y subirlo al secret manager si no existe
+echo -e "${CYAN}Inicio Bloque Hacer cat \$PEM_KEY_PATH y subirlo al secret manager si no existe${NC}"
+if ! aws secretsmanager describe-secret --secret-id "$PEM_KEY_PATH" >/dev/null 2>&1; then
+  echo "❌ El secreto NO existe, creando..."
+  aws secretsmanager create-secret --name "$PEM_KEY_PATH" --secret-string file://"$PEM_KEY_PATH" | jq
+else
+  echo "✅ El secreto ya existe"
+fi
+echo -e "${GREEN}Fin Bloque Hacer cat \$PEM_KEY_PATH y subirlo al secret manager si no existe${NC}"
+# Fin Hacer cat $PEM_KEY_PATH y subirlo al secret manager si no existe
+
 # Crear security group
 echo -e "${CYAN}Inicio Bloque Crear security group${NC}"
 CREATE_SECURITY_GROUP=true
