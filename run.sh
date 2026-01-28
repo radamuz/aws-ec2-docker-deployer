@@ -1,10 +1,26 @@
 #!/bin/bash
 
+# Aplicar colores de bash
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+ORANGE='\033[0;33m'
+PURPLE='\033[0;35m'
+BROWN='\033[0;33m'
+CYAN="\e[36m"
+NC='\033[0m' # No Color
+# Fin Aplicar colores de bash
+
 # Que aws cli no use less
+echo -e "${CYAN}Inicio Bloque Que aws cli no use less${NC}"
 export AWS_PAGER=""
+echo -e "${GREEN}Fin Bloque Que aws cli no use less${NC}"
 # Fin Que aws cli no use less
 
+
 # Elegir un Dockerfile
+echo -e "${CYAN}Inicio Bloque Elegir un Dockerfile${NC}"
 DOCKERFILES=(dockerfiles/*)
 echo "Elige un Dockerfile:"
 select DOCKERFILE_PATH in "${DOCKERFILES[@]}"; do
@@ -15,16 +31,20 @@ select DOCKERFILE_PATH in "${DOCKERFILES[@]}"; do
     echo "Opción inválida, prueba otra vez."
   fi
 done
+echo -e "${GREEN}Fin Bloque Elegir un Dockerfile${NC}"
 # Fin Elegir un Dockerfile
 
 # Arrancar proceso de construcción de imágenes Docker
+echo -e "${CYAN}Inicio Bloque Arrancar proceso de construcción de imágenes Docker${NC}"
 RUN_DOCKER_BUILD=true
 if $RUN_DOCKER_BUILD; then
   bash scripts/docker-build.sh "$DOCKERFILE_PATH"
 fi
+echo -e "${GREEN}Fin Bloque Arrancar proceso de construcción de imágenes Docker${NC}"
 # Fin Arrancar proceso de construcción de imágenes Docker
 
 # Elegir un perfil de AWS 
+echo -e "${CYAN}Inicio Bloque Elegir un perfil de AWS${NC}"
 AWS_PROFILES=($(aws configure list-profiles | sort))
 echo "Elige un perfil de AWS:"
 select AWS_PROFILE in "${AWS_PROFILES[@]}"; do
@@ -36,14 +56,18 @@ select AWS_PROFILE in "${AWS_PROFILES[@]}"; do
     echo "Opción inválida, prueba otra vez."
   fi
 done
-# Fin Elegir un perfil de AWS 
+echo -e "${GREEN}Fin Bloque Elegir un perfil de AWS${NC}"
+# Fin Elegir un perfil de AWS
 
-# Elige una región de AWS
+# Elige una región de AWS con ./scripts/select-aws-region.sh
+echo -e "${CYAN}Inicio Bloque Elegir una región de AWS${NC}"
 source ./scripts/select-aws-region.sh
 echo -e "AWS_REGION: $AWS_REGION"
-# Fin Elige una región de AWS
+echo -e "${GREEN}Fin Bloque Elegir una región de AWS${NC}"
+# Fin Elige una región de AWS con ./scripts/select-aws-region.sh
 
 # Test de credenciales
+echo -e "${CYAN}Inicio Bloque Test de credenciales${NC}"
 AWS_STS_GET_CALLER_IDENTITY=$(aws sts get-caller-identity --profile "$AWS_PROFILE")
 AWS_STS_GET_CALLER_IDENTITY_STATUS=$?
 echo "$AWS_STS_GET_CALLER_IDENTITY" | jq
@@ -53,6 +77,7 @@ else
     echo "Error: Las credenciales de AWS no son válidas."
     exit 1
 fi
+echo -e "${GREEN}Fin Bloque Test de credenciales${NC}"
 # Fin Test de credenciales
 
 # Introduce el nombre del aplicativo a desplegar
