@@ -99,15 +99,15 @@ echo -e "${CYAN}Inicio Bloque Crear key pair${NC}"
 CREATE_KEY_PAIR=true
 if $CREATE_KEY_PAIR; then
   if aws ec2 describe-key-pairs \
-      --query "KeyPairs[?KeyName=='$APP_NAME']" \
-      --output text | grep -q "$APP_NAME"; then
+      --query "KeyPairs[?KeyName=='$APP_NAME.$AWS_REGION.$AWS_PROFILE']" \
+      --output text | grep -q "$APP_NAME.$AWS_REGION.$AWS_PROFILE"; then
     echo "✅ El key pair existe"
   else
     echo "❌ El key pair NO existe"
     aws ec2 create-key-pair \
-      --key-name "$APP_NAME" \
+      --key-name "$APP_NAME.$AWS_REGION.$AWS_PROFILE" \
       --query 'KeyMaterial' \
-      --output text > "keypairs/$APP_NAME.$AWS_REGION.pem"
+      --output text > "keypairs/$APP_NAME.$AWS_REGION.$AWS_PROFILE.pem"
   fi
 fi
 echo -e "${GREEN}Fin Bloque Crear key pair${NC}"
