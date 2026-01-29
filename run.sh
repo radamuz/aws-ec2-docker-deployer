@@ -220,6 +220,12 @@ done
 echo -e "${GREEN}Fin Bloque Elegir el instance type de AWS${NC}"
 # Fin Elegir el instance type de AWS
 
+# Crear policy, role e instance profile
+echo -e "${CYAN}Inicio Bloque Crear policy, role e instance profile${NC}"
+bash scripts/create-policy-role-and-instance-profile.sh "$AWS_PROFILE" "$AWS_REGION" "$APP_NAME"
+echo -e "${GREEN}Fin Bloque Crear policy, role e instance profile${NC}"
+# Fin Crear policy, role e instance profile
+
 # Si la EC2 no existe entonces creala
 echo -e "${CYAN}Inicio Bloque Si la EC2 no existe entonces creala${NC}"
 CREATE_EC2=true

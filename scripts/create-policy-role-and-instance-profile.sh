@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export AWS_PROFILE="$1"
+export AWS_REGION="$2"
+export APP_NAME="$3"
+
 # ===== Variables =====
-ROLE_NAME="ec2-read-own-tags-role"
-POLICY_NAME="ec2-describe-own-instance-policy"
-INSTANCE_PROFILE_NAME="ec2-read-own-tags-profile"
+ROLE_NAME="$APP_NAME-role"
+POLICY_NAME="$APP_NAME-policy"
+INSTANCE_PROFILE_NAME="$APP_NAME-instance-profile"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-POLICY_JSON_FILE="$SCRIPT_DIR/iam/ec2-describe-own-instance-policy.json"
-TRUST_POLICY_JSON_FILE="$SCRIPT_DIR/iam/ec2-assume-role-trust-policy.json"
+POLICY_JSON_FILE="config/iam/ec2-describe-instances-policy.json"
+TRUST_POLICY_JSON_FILE="config/iam/ec2-assume-role-trust-policy.json"
 
-if [[ ! -f "$POLICY_JSON_FILE" || ! -f "$TRUST_POLICY_JSON_FILE" ]]; then
-  echo "❌ Faltan los archivos JSON en $SCRIPT_DIR/iam"
-  exit 1
-fi
 
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 POLICY_ARN="arn:aws:iam::$ACCOUNT_ID:policy/$POLICY_NAME"
