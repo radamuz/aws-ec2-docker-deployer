@@ -195,7 +195,8 @@ echo "Elige el fichero user-data:"
 select USER_DATA_FILE in $(ls scripts/user-data/); do
   if [[ -n "$USER_DATA_FILE" ]]; then
     echo "Has elegido el fichero user-data: $USER_DATA_FILE"
-    export USER_DATA_PATH="scripts/user-data/$USER_DATA_FILE"
+
+    export USER_DATA_PATH="$(realpath scripts/user-data/$USER_DATA_FILE)"
     break
   else
     echo "Opción inválida, prueba otra vez."
@@ -323,6 +324,7 @@ LOG_FILE="logs/$(date '+%Y-%m-%d_%H-%M-%S').log"
   echo "EC2_RUN_INSTANCES_OUTPUT_JSON=${EC2_RUN_INSTANCES_OUTPUT_JSON-UNDEFINED}"
   echo "INSTANCE_ID=${INSTANCE_ID-UNDEFINED}"
   echo "PUBLIC_IP=${PUBLIC_IP-UNDEFINED}"
+  echo "USER_DATA_PATH=${USER_DATA_PATH-UNDEFINED}"
 } > "$LOG_FILE"
 echo -e "${GREEN}Fin Bloque Guardar registro de variables usadas${NC}"
 # Fin Guardar registro de variables usadas
