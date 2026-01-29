@@ -221,8 +221,11 @@ if $CREATE_EC2; then
       --output text)
     echo "✅ INSTANCE_ID: $INSTANCE_ID"
 
+    DESCRIBE_INSTANCES=false
+    if $DESCRIBE_INSTANCES; then
     EC2_DESCRIBE_INSTANCES_OUTPUT_JSON=$(aws ec2 describe-instances \
       --instance-ids "$INSTANCE_ID")
+    fi
 
     # Obtener la dirección IP pública
     PUBLIC_IP=$(
