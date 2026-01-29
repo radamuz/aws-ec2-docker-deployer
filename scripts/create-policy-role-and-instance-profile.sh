@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export AWS_PAGER=""
 export AWS_PROFILE="$1"
 export AWS_REGION="$2"
 export APP_NAME="$3"
@@ -52,6 +53,22 @@ echo "▶ Añadiendo rol al instance profile..."
 aws iam add-role-to-instance-profile \
   --instance-profile-name "$INSTANCE_PROFILE_NAME" \
   --role-name "$ROLE_NAME" || true
+
+echo "⏳ Esperando a que el instance profile esté disponible..."
+
+for i in {1..12}; do
+  sleep 1
+  if aws iam get-instance-profile \
+       --instance-profile-name "$INSTANCE_PROFILE_NAME" \
+       --query 'InstanceProfile.Roles[0].RoleName' \
+       --output text 2>/dev/null | grep -q .; then
+    echo "✅ Instance profile listo"
+    break
+  fi
+
+  echo "⏱️  Aún no disponible… reintentando ($i)"
+  sleep 1
+done
 
 echo
 echo "✅ TODO LISTO"
