@@ -11,7 +11,7 @@ ROLE_NAME="$APP_NAME-role"
 POLICY_NAME="$APP_NAME-policy"
 INSTANCE_PROFILE_NAME="$APP_NAME-instance-profile"
 
-POLICY_JSON_FILE="config/iam/ec2-describe-instances-policy.json"
+POLICY_JSON_FILE="config/iam/ec2-describe-tags-policy.json"
 TRUST_POLICY_JSON_FILE="config/iam/ec2-assume-role-trust-policy.json"
 
 
